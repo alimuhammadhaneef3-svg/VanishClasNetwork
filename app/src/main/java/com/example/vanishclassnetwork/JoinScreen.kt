@@ -1,48 +1,25 @@
 package com.example.vanishclassnetwork
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-fun validateDisplayName(name: String): Result<String> {
-    val trimmed = name.trim()
-    return when {
-        trimmed.isEmpty() -> Result.failure(IllegalArgumentException("Display name cannot be empty"))
-        trimmed.length < 3 -> Result.failure(IllegalArgumentException("Name must be at least 3 characters"))
-        else -> Result.success(trimmed)
-    }
-}
-
 @Composable
 fun JoinScreen(
-    onJoin: (String) -> Unit
+    onJoin: (String, String) -> Unit // Now takes Name and URL
 ) {
     var displayName by remember { mutableStateOf("") }
+    // Pre-filled with the protocol URL
+    var relayUrl by remember { mutableStateOf("wss://vanish-relay-sawaira.bonto.page/ws") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val handleJoin = {
-        validateDisplayName(displayName).fold(
-            onSuccess = { validName ->
-                onJoin(validName)
-            },
-            onFailure = { error ->
-                errorMessage = error.message
-            }
-        )
-    }
-
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -52,15 +29,12 @@ fun JoinScreen(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
         Text(
             text = "Enter a display name to join the class chat.",
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
@@ -72,8 +46,16 @@ fun JoinScreen(
             label = { Text("Display Name") },
             singleLine = true,
             isError = errorMessage != null,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { handleJoin() }),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = relayUrl,
+            onValueChange = { relayUrl = it },
+            label = { Text("Relay URL") },
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -82,19 +64,26 @@ fun JoinScreen(
                 text = errorMessage!!,
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 12.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = { handleJoin() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+            onClick = {
+                val trimmedName = displayName.trim()
+                if (trimmedName.isEmpty()) {
+                    errorMessage = "Display name cannot be empty"
+                } else if (trimmedName.length < 3) {
+                    errorMessage = "Name must be at least 3 characters"
+                } else if (relayUrl.isBlank()) {
+                    errorMessage = "Relay URL cannot be empty"
+                } else {
+                    onJoin(trimmedName, relayUrl)
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text("Join Chat", fontSize = 18.sp)
         }

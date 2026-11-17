@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun ChatScreen(
     currentUser: String,
+    relayUrl: String, // <-- ADDED THIS
     viewModel: ChatViewModel = viewModel()
 ) {
     val messages by viewModel.messages.collectAsState()
@@ -26,14 +27,19 @@ fun ChatScreen(
 
     var inputText by remember { mutableStateOf("") }
 
+    // ADDED THIS: Connects to the server when the screen loads
+    LaunchedEffect(relayUrl) {
+        viewModel.connectToRelay(relayUrl, currentUser)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Class Chat", fontWeight = FontWeight.Bold) },
                 actions = {
-                    // Network Toggle Button in the App Bar
+                    // Network Status Indicator
                     Button(
-                        onClick = { viewModel.toggleNetwork() },
+                        onClick = { /* Real network status is now read-only */ },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isNetworkAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                         ),
@@ -60,7 +66,7 @@ fun ChatScreen(
                 Row(
                     modifier = Modifier
                         .padding(horizontal = 8.dp, vertical = 8.dp)
-                        .navigationBarsPadding(), // Fixes the bottom bar overlap
+                        .navigationBarsPadding(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedTextField(
@@ -150,7 +156,7 @@ fun MessageBubble(message: MessageEntity, isMine: Boolean, remainingSeconds: Lon
         Card(
             colors = CardDefaults.cardColors(containerColor = bubbleColor),
             shape = bubbleShape,
-            modifier = Modifier.widthIn(max = 280.dp) // Prevents bubbles from stretching too wide
+            modifier = Modifier.widthIn(max = 280.dp)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(

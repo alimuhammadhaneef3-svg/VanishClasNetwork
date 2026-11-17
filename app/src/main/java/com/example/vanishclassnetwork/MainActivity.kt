@@ -27,15 +27,20 @@ class MainActivity : ComponentActivity() {
 fun VanishApp() {
     var isJoined by remember { mutableStateOf(false) }
     var currentUser by remember { mutableStateOf("") }
+    var relayUrl by remember { mutableStateOf("") } // <-- Added to hold the URL
 
     if (!isJoined) {
         JoinScreen(
-            onJoin = { displayName ->
-                currentUser = displayName
+            onJoin = { name, url ->
+                currentUser = name
+                relayUrl = url
                 isJoined = true
             }
         )
     } else {
-        ChatScreen(currentUser = currentUser)
+        ChatScreen(
+            currentUser = currentUser,
+            relayUrl = relayUrl // <-- Passed to ChatScreen
+        )
     }
 }
